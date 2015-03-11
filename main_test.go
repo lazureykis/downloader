@@ -5,16 +5,21 @@ import (
 )
 
 func TestFetchUrl(t *testing.T) {
-	var r FetchResult
+	var (
+		ch chan FetchResult
+		r  FetchResult
+	)
 
 	// Bad DNS record
-	r = FetchUrl("http://google.comx/")
+	ch = FetchUrl("http://google.comx/")
+	r = <-ch
 	if r.err == nil {
 		t.Error("http://google.comx/ should not be parsed")
 	}
 
 	// Good host.
-	r = FetchUrl("http://google.com/")
+	ch = FetchUrl("http://google.com/")
+	r = <-ch
 	if r.err != nil {
 		t.Error("http://google.com/ - ", r.err.Error())
 	}

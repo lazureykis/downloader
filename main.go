@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"log"
+	"net/http"
 )
 
 type (
@@ -16,27 +17,27 @@ type (
 )
 
 var (
-	concurrency int
-	url         string
+	Concurrency int
+	Url         string
 )
 
 func main() {
-	flag.IntVar(&concurrency, "c", 20, "Concurrency level.")
-	flag.StringVar(&url, "u", "", "URL to fetch")
+	flag.IntVar(&Concurrency, "c", 20, "Concurrency level.")
+	flag.StringVar(&Url, "u", "", "URL to fetch")
 	flag.Parse()
 
-	if len(url) == 0 {
+	if len(Url) == 0 {
 		log.Fatalln("Missing argument -u")
 	}
 
-	fmt.Println("Concurrent threads:", concurrency)
-	fmt.Println("URL:", url)
-	ch := FetchUrl(url)
+	fmt.Println("Concurrent threads:", Concurrency)
+	fmt.Println("URL:", Url)
+	ch := FetchUrl(Url)
 	fr := <-ch
 	if fr.err != nil {
 		log.Fatal(fr.err.Error())
 	} else {
-		fmt.Println("Parsed ", fr.url)
+		fmt.Println("Parsed", fr.url)
 		fmt.Println("Found", len(fr.links), "links:")
 		for _, link := range fr.links {
 			fmt.Println(link)
@@ -48,7 +49,12 @@ func FetchUrl(url string) chan FetchResult {
 	ch := make(chan FetchResult)
 
 	go func() {
-		doc, err := goquery.NewDocument(url)
+		res, err := http.Get(url)
+		if err != nil {
+			ch <- FetchResult{"", err, nil}
+		}
+
+		doc, err := goquery.NewDocumentFromResponse(res)
 		if err != nil {
 			ch <- FetchResult{"", err, nil}
 		}
