@@ -31,7 +31,8 @@ func main() {
 
 	fmt.Println("Concurrent threads:", concurrency)
 	fmt.Println("URL:", url)
-	fr := FetchUrl(url)
+	ch := FetchUrl(url)
+	fr := <-ch
 	if fr.err != nil {
 		log.Fatal(fr.err.Error())
 	} else {
@@ -43,17 +44,23 @@ func main() {
 	}
 }
 
-func FetchUrl(url string) FetchResult {
-	doc, err := goquery.NewDocument(url)
-	if err != nil {
-		return FetchResult{"", err, nil}
-	}
+func FetchUrl(url string) chan FetchResult {
+	ch := make(chan FetchResult)
 
-	links := make([]string, 0)
-	doc.Find("a[href]").Each(func(i int, s *goquery.Selection) {
-		link, _ := s.Attr("href")
-		links = append(links, link)
-	})
+	go func() {
+		doc, err := goquery.NewDocument(url)
+		if err != nil {
+			ch <- FetchResult{"", err, nil}
+		}
 
-	return FetchResult{url, nil, links}
+		links := make([]string, 0)
+		doc.Find("a[href]").Each(func(i int, s *goquery.Selection) {
+			link, _ := s.Attr("href")
+			links = append(links, link)
+		})
+
+		ch <- FetchResult{url, nil, links}
+	}()
+
+	return ch
 }
