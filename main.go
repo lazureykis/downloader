@@ -5,6 +5,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"log"
 	"net/http"
+	"time"
 )
 
 type (
@@ -18,6 +19,7 @@ type (
 var (
 	Concurrency int
 	Url         string
+	Timeout     = 500 * time.Millisecond
 )
 
 func main() {
@@ -36,8 +38,13 @@ func work(url string, concurrency int) {
 	log.Println("Concurrent threads:", concurrency)
 	log.Println("URL:", url)
 	ch := FetchUrl(url)
-	fr := <-ch
-	processResult(fr)
+
+	select {
+	case fr := <-ch:
+		processResult(fr)
+	case <-time.After(Timeout * time.Millisecond):
+		log.Println("timed out")
+	}
 }
 
 func processResult(fr FetchResult) {
