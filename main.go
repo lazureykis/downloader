@@ -37,6 +37,10 @@ func work(url string, concurrency int) {
 	log.Println("URL:", url)
 	ch := FetchUrl(url)
 	fr := <-ch
+	processResult(fr)
+}
+
+func processResult(fr FetchResult) {
 	if fr.err != nil {
 		log.Println(fr.err.Error())
 	} else {
