@@ -1,8 +1,20 @@
 package main
 
 import (
+	"io/ioutil"
+	"log"
+	"os"
 	"testing"
 )
+
+func TestWork(t *testing.T) {
+	// Disable logging for this test
+	defer log.SetOutput(os.Stdout)
+	log.SetOutput(ioutil.Discard)
+
+	work("http://google.com", 10)
+	work("", 10)
+}
 
 func TestFetchUrl(t *testing.T) {
 	var (

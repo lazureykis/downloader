@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"log"
 	"net/http"
@@ -30,17 +29,21 @@ func main() {
 		log.Fatalln("Missing argument -u")
 	}
 
-	fmt.Println("Concurrent threads:", Concurrency)
-	fmt.Println("URL:", Url)
-	ch := FetchUrl(Url)
+	work(Url, Concurrency)
+}
+
+func work(url string, concurrency int) {
+	log.Println("Concurrent threads:", concurrency)
+	log.Println("URL:", url)
+	ch := FetchUrl(url)
 	fr := <-ch
 	if fr.err != nil {
-		log.Fatal(fr.err.Error())
+		log.Println(fr.err.Error())
 	} else {
-		fmt.Println("Parsed", fr.url)
-		fmt.Println("Found", len(fr.links), "links:")
+		log.Println("Parsed", fr.url)
+		log.Println("Found", len(fr.links), "links:")
 		for _, link := range fr.links {
-			fmt.Println(link)
+			log.Println(link)
 		}
 	}
 }
