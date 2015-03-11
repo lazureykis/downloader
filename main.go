@@ -5,6 +5,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"log"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -59,27 +60,40 @@ func processResult(fr FetchResult) {
 	}
 }
 
-func FetchUrl(url string) chan FetchResult {
+func FetchUrl(urlString string) chan FetchResult {
 	ch := make(chan FetchResult)
+	base_url, err := url.Parse(urlString)
 
 	go func() {
-		res, err := http.Get(url)
 		if err != nil {
 			ch <- FetchResult{"", err, nil}
+			return
+		}
+
+		res, err := http.Get(urlString)
+		if err != nil {
+			ch <- FetchResult{"", err, nil}
+			return
 		}
 
 		doc, err := goquery.NewDocumentFromResponse(res)
 		if err != nil {
 			ch <- FetchResult{"", err, nil}
+			return
 		}
 
 		links := make([]string, 0)
 		doc.Find("a[href]").Each(func(i int, s *goquery.Selection) {
 			link, _ := s.Attr("href")
-			links = append(links, link)
+			link_url, err := url.Parse(link)
+			if err == nil {
+				real_link := base_url.ResolveReference(link_url).String()
+				links = append(links, real_link)
+			}
 		})
 
-		ch <- FetchResult{url, nil, links}
+		ch <- FetchResult{urlString, nil, links}
+		return
 	}()
 
 	return ch
